@@ -2,6 +2,7 @@
 let audioContext = null;
 let audioBuffer = null;
 let audioFileName = '';
+let audioDuration = 0;
 let sizingMode = 'time'; // 'time' or 'fixed'
 
 // DOM elements
@@ -12,11 +13,13 @@ const previewSection = document.getElementById('previewSection');
 const fileInfo = document.getElementById('fileInfo');
 const waveColorInput = document.getElementById('waveColor');
 const waveColorTextInput = document.getElementById('waveColorText');
+const bgColorInput = document.getElementById('bgColor');
+const bgColorTextInput = document.getElementById('bgColorText');
+const transparentBgCheckbox = document.getElementById('transparentBg');
 const canvasWidthInput = document.getElementById('canvasWidth');
 const canvasHeightInput = document.getElementById('canvasHeight');
 const timeMultiplierInput = document.getElementById('timeMultiplier');
-const aspectModeSelect = document.getElementById('aspectMode');
-const fpsInput = document.getElementById('fps');
+const verticalHeightInput = document.getElementById('verticalHeight');
 const generateBtn = document.getElementById('generateBtn');
 const exportBtn = document.getElementById('exportBtn');
 const resetBtn = document.getElementById('resetBtn');
@@ -37,8 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadThemePreference() {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
+    // Default to light theme, only switch to dark if explicitly saved
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
     }
 }
 
@@ -56,7 +60,7 @@ function setupEventListeners() {
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleDrop);
 
-    // Color inputs sync
+    // Waveform color inputs sync
     waveColorInput.addEventListener('input', (e) => {
         waveColorTextInput.value = e.target.value;
     });
@@ -65,6 +69,31 @@ function setupEventListeners() {
         const value = e.target.value;
         if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
             waveColorInput.value = value;
+        }
+    });
+
+    // Background color inputs sync
+    bgColorInput.addEventListener('input', (e) => {
+        bgColorTextInput.value = e.target.value;
+        transparentBgCheckbox.checked = false;
+    });
+
+    bgColorTextInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+            bgColorInput.value = value;
+            transparentBgCheckbox.checked = false;
+        }
+    });
+
+    // Transparent background checkbox
+    transparentBgCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            bgColorInput.disabled = true;
+            bgColorTextInput.disabled = true;
+        } else {
+            bgColorInput.disabled = false;
+            bgColorTextInput.disabled = false;
         }
     });
 
@@ -87,9 +116,9 @@ function setupEventListeners() {
 
     // Theme toggle
     themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
     // Generate button
@@ -137,35 +166,6 @@ function handleFile(file) {
 
     audioFileName = file.name;
     
-    // Display file info with safe text content
-    const fileSize = (file.size / 1024 / 1024).toFixed(2);
-    
-    // Clear previous content
-    fileInfo.innerHTML = '';
-    
-    // Create safe elements
-    const fileNameLabel = document.createElement('strong');
-    fileNameLabel.textContent = 'File: ';
-    const fileNameText = document.createTextNode(file.name);
-    
-    const fileSizeLabel = document.createElement('strong');
-    fileSizeLabel.textContent = 'Size: ';
-    const fileSizeText = document.createTextNode(`${fileSize} MB`);
-    
-    const fileTypeLabel = document.createElement('strong');
-    fileTypeLabel.textContent = 'Type: ';
-    const fileTypeText = document.createTextNode(file.type);
-    
-    // Append elements
-    fileInfo.appendChild(fileNameLabel);
-    fileInfo.appendChild(fileNameText);
-    fileInfo.appendChild(document.createElement('br'));
-    fileInfo.appendChild(fileSizeLabel);
-    fileInfo.appendChild(fileSizeText);
-    fileInfo.appendChild(document.createElement('br'));
-    fileInfo.appendChild(fileTypeLabel);
-    fileInfo.appendChild(fileTypeText);
-
     // Read audio file
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -173,7 +173,47 @@ function handleFile(file) {
             // Initialize audio context
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             audioBuffer = await audioContext.decodeAudioData(e.target.result);
+            audioDuration = audioBuffer.duration;
             
+            // Display file info with safe text content
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            const minutes = Math.floor(audioDuration / 60);
+            const seconds = Math.floor(audioDuration % 60);
+            const durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Clear previous content
+            fileInfo.innerHTML = '';
+            
+            // Create safe elements
+            const fileNameLabel = document.createElement('strong');
+            fileNameLabel.textContent = 'Name: ';
+            const fileNameText = document.createTextNode(file.name);
+            
+            const fileDurationLabel = document.createElement('strong');
+            fileDurationLabel.textContent = 'Duration: ';
+            const fileDurationText = document.createTextNode(durationStr);
+            
+            const fileTypeLabel = document.createElement('strong');
+            fileTypeLabel.textContent = 'Type: ';
+            const fileTypeText = document.createTextNode(file.type);
+            
+            const fileSizeLabel = document.createElement('strong');
+            fileSizeLabel.textContent = 'Size: ';
+            const fileSizeText = document.createTextNode(`${fileSize} MB`);
+            
+            // Append elements
+            fileInfo.appendChild(fileNameLabel);
+            fileInfo.appendChild(fileNameText);
+            fileInfo.appendChild(document.createElement('br'));
+            fileInfo.appendChild(fileDurationLabel);
+            fileInfo.appendChild(fileDurationText);
+            fileInfo.appendChild(document.createElement('br'));
+            fileInfo.appendChild(fileTypeLabel);
+            fileInfo.appendChild(fileTypeText);
+            fileInfo.appendChild(document.createElement('br'));
+            fileInfo.appendChild(fileSizeLabel);
+            fileInfo.appendChild(fileSizeText);
+
             // Show controls
             controlsSection.style.display = 'block';
             
@@ -198,33 +238,24 @@ async function generateWaveform() {
     previewSection.style.display = 'block';
     exportBtn.style.display = 'none';
 
-    const color = waveColorInput.value;
+    const waveColor = waveColorInput.value;
+    const bgColor = transparentBgCheckbox.checked ? null : bgColorInput.value;
     let width, height;
 
     // Calculate dimensions based on sizing mode
     if (sizingMode === 'time') {
         const duration = audioBuffer.duration;
         const multiplier = parseInt(timeMultiplierInput.value);
-        const aspectMode = aspectModeSelect.value;
-
-        // Base width on duration
+        
+        // Strictly: width = duration × px/sec
         width = Math.round(duration * multiplier);
         
-        // Calculate height based on aspect mode
-        if (aspectMode === 'balanced') {
-            // Use a balanced ratio for most audio lengths
-            height = Math.max(400, Math.min(800, width / 3));
-        } else if (aspectMode === 'horizontal') {
-            // More horizontal stretch - shorter height
-            height = Math.max(300, width / 5);
-        } else { // vertical
-            // More vertical - taller height
-            height = Math.max(500, width / 2);
-        }
+        // Height is user-defined
+        height = parseInt(verticalHeightInput.value);
 
         // Ensure reasonable bounds
         width = Math.max(320, Math.min(3840, width));
-        height = Math.max(180, Math.min(2160, height));
+        height = Math.max(100, Math.min(2160, height));
     } else {
         // Fixed size mode
         width = parseInt(canvasWidthInput.value);
@@ -236,27 +267,33 @@ async function generateWaveform() {
     waveformCanvas.height = height;
 
     // Draw waveform on canvas
-    drawWaveform(audioBuffer, waveformCanvas, color);
+    drawWaveform(audioBuffer, waveformCanvas, waveColor, bgColor);
 
     // Show export button
     exportBtn.style.display = 'inline-block';
     generateBtn.disabled = false;
 }
 
-function drawWaveform(buffer, canvas, color) {
-    const ctx = canvas.getContext('2d');
+function drawWaveform(buffer, canvas, waveColor, bgColor) {
+    const ctx = canvas.getContext('2d', { alpha: true });
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear canvas with transparent background
+    // Clear canvas
     ctx.clearRect(0, 0, width, height);
+    
+    // Draw background if not transparent
+    if (bgColor) {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, width, height);
+    }
 
     const data = buffer.getChannelData(0); // Get first channel
     const step = Math.ceil(data.length / width);
     const amp = height / 2;
 
-    ctx.fillStyle = color;
-    ctx.strokeStyle = color;
+    ctx.fillStyle = waveColor;
+    ctx.strokeStyle = waveColor;
 
     // Draw waveform
     for (let i = 0; i < width; i++) {
@@ -329,6 +366,7 @@ function resetApp() {
     // Reset all variables
     audioBuffer = null;
     audioFileName = '';
+    audioDuration = 0;
     sizingMode = 'time';
 
     // Reset file input
@@ -340,13 +378,17 @@ function resetApp() {
     progressContainer.style.display = 'none';
 
     // Reset form values
-    waveColorInput.value = '#00ff88';
-    waveColorTextInput.value = '#00ff88';
+    waveColorInput.value = '#000000';
+    waveColorTextInput.value = '#000000';
+    bgColorInput.value = '#ffffff';
+    bgColorTextInput.value = '#ffffff';
+    transparentBgCheckbox.checked = false;
+    bgColorInput.disabled = false;
+    bgColorTextInput.disabled = false;
     canvasWidthInput.value = '1280';
     canvasHeightInput.value = '720';
     timeMultiplierInput.value = '100';
-    aspectModeSelect.value = 'balanced';
-    fpsInput.value = '30';
+    verticalHeightInput.value = '400';
 
     // Reset sizing mode
     sizingBtns.forEach(btn => {
