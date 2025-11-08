@@ -90,7 +90,6 @@ ffmpeg -i input.webm -c:v libx264 -pix_fmt yuv420p output.mp4
 - **HTML5 Canvas**: For rendering the waveform
 - **Web Audio API**: For audio processing and analysis
 - **MediaRecorder API**: For video recording
-- **WaveSurfer.js**: For advanced audio visualization (loaded from CDN)
 
 ### Browser Compatibility
 
@@ -181,7 +180,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
-- [WaveSurfer.js](https://wavesurfer-js.org/) for audio visualization capabilities
 - Built with modern web technologies and Web APIs
 
 ## Support

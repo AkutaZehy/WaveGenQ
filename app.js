@@ -1,5 +1,4 @@
 // Global variables
-let wavesurfer = null;
 let audioContext = null;
 let audioBuffer = null;
 let audioFileName = '';
@@ -331,7 +330,6 @@ async function exportVideo() {
 
 function resetApp() {
     // Reset all variables
-    wavesurfer = null;
     audioBuffer = null;
     audioFileName = '';
 
