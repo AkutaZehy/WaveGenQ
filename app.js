@@ -98,13 +98,34 @@ function handleFile(file) {
 
     audioFileName = file.name;
     
-    // Display file info
+    // Display file info with safe text content
     const fileSize = (file.size / 1024 / 1024).toFixed(2);
-    fileInfo.innerHTML = `
-        <strong>File:</strong> ${file.name}<br>
-        <strong>Size:</strong> ${fileSize} MB<br>
-        <strong>Type:</strong> ${file.type}
-    `;
+    
+    // Clear previous content
+    fileInfo.innerHTML = '';
+    
+    // Create safe elements
+    const fileNameLabel = document.createElement('strong');
+    fileNameLabel.textContent = 'File: ';
+    const fileNameText = document.createTextNode(file.name);
+    
+    const fileSizeLabel = document.createElement('strong');
+    fileSizeLabel.textContent = 'Size: ';
+    const fileSizeText = document.createTextNode(`${fileSize} MB`);
+    
+    const fileTypeLabel = document.createElement('strong');
+    fileTypeLabel.textContent = 'Type: ';
+    const fileTypeText = document.createTextNode(file.type);
+    
+    // Append elements
+    fileInfo.appendChild(fileNameLabel);
+    fileInfo.appendChild(fileNameText);
+    fileInfo.appendChild(document.createElement('br'));
+    fileInfo.appendChild(fileSizeLabel);
+    fileInfo.appendChild(fileSizeText);
+    fileInfo.appendChild(document.createElement('br'));
+    fileInfo.appendChild(fileTypeLabel);
+    fileInfo.appendChild(fileTypeText);
 
     // Read audio file
     const reader = new FileReader();
