@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaveGenQ - Audio Waveform Animation Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>WaveGenQ</h1>
+            <p class="subtitle">Generate animated waveform videos from audio files</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h3>Upload Audio File</h3>
+                        <p>Click to browse or drag and drop</p>
+                        <p class="file-types">Supports: MP3, WAV, OGG, M4A</p>
+                    </div>
+                    <input type="file" id="audioFile" accept="audio/*" hidden>
+                </div>
+            </section>
+
+            <section class="controls-section" id="controlsSection" style="display: none;">
+                <div class="file-info" id="fileInfo"></div>
+                
+                <div class="control-group">
+                    <label for="waveColor">Waveform Color:</label>
+                    <div class="color-input-group">
+                        <input type="color" id="waveColor" value="#00ff88">
+                        <input type="text" id="waveColorText" value="#00ff88" pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="canvasWidth">Canvas Width (px):</label>
+                    <input type="number" id="canvasWidth" value="1280" min="320" max="3840" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label for="canvasHeight">Canvas Height (px):</label>
+                    <input type="number" id="canvasHeight" value="720" min="180" max="2160" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label for="fps">Frame Rate (fps):</label>
+                    <input type="number" id="fps" value="30" min="15" max="60" step="1">
+                </div>
+
+                <button id="generateBtn" class="btn btn-primary">Generate Waveform Animation</button>
+            </section>
+
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <h2>Preview</h2>
+                <div class="canvas-container">
+                    <canvas id="waveformCanvas"></canvas>
+                </div>
+                
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Processing: 0%</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="exportBtn" class="btn btn-success" style="display: none;">Export as MP4</button>
+                    <button id="resetBtn" class="btn btn-secondary">Upload New File</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Built with ❤️ using WaveSurfer.js | <a href="https://github.com/AkutaZehy/WaveGenQ" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/wavesurfer.js@7.7.3/dist/wavesurfer.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
