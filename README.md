@@ -1,5 +1,7 @@
 # WaveGenQ
 
+WaveGenQ mean Wave-Generator-Quick.
+
 A browser-based tool for generating waveform images from audio files with customizable colors and transparent backgrounds.
 
 ## Features
