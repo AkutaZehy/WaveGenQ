@@ -1,16 +1,18 @@
 # WaveGenQ
 
-A simple, browser-based tool for generating animated waveform videos from audio files. Create beautiful visualizations with transparent backgrounds that can be used in video editing, social media, and more.
+A simple, browser-based tool for generating waveform images from audio files. Create beautiful visualizations with transparent backgrounds that can be used in video editing, social media, and more.
 
 ## Features
 
 - 🎵 **Audio File Support**: Supports MP3, WAV, OGG, M4A and other common audio formats
-- 🎨 **Customizable Appearance**: Choose your waveform color and canvas dimensions
-- 🎬 **Animated Output**: Generate videos with waveforms that animate from start to finish
-- 🌈 **Transparent Background**: Export with alpha channel for easy compositing
+- 🎨 **Customizable Appearance**: Choose your waveform color with built-in color picker
+- 🖼️ **PNG Export**: Generate high-quality PNG images with transparent backgrounds
+- 🌈 **Transparent Background**: Perfect for compositing in video editors
+- 📐 **Intelligent Sizing**: Time-based sizing adapts to audio duration for optimal appearance
+- 🌓 **Light/Dark Theme**: Toggle between light and dark modes with persistent preference
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 - 🚀 **No Installation Required**: Run directly in your browser using VSCode Live Server
-- 🎯 **Zero Dependencies**: No npm, no node_modules - everything loads from CDN
+- 🎯 **Zero Dependencies**: No npm, no node_modules - pure vanilla JavaScript
 
 ## Quick Start
 
@@ -50,38 +52,69 @@ A simple, browser-based tool for generating animated waveform videos from audio 
 - Supported formats: MP3, WAV, OGG, M4A
 
 ### Step 2: Customize Settings
-- **Waveform Color**: Choose the color for your waveform visualization
-- **Canvas Width**: Set the width of the output video (default: 1280px)
-- **Canvas Height**: Set the height of the output video (default: 720px)
-- **Frame Rate**: Set the frames per second (default: 30fps)
+
+#### Theme
+- Click the moon/sun icon in the header to toggle between dark and light themes
+- Your preference is saved automatically
+
+#### Waveform Color
+- Choose the color for your waveform visualization using the color picker
+
+#### Sizing Mode
+
+**Time-based (Recommended)**
+- **Time Multiplier**: Controls the width based on audio duration (pixels per second)
+  - Higher values = wider, more detailed waveforms
+  - For 3-4 minute songs, 100-150 works well
+  - For short SFX (< 5 seconds), use 200-500 for better visibility
+- **Aspect Mode**:
+  - **Balanced**: Good for most audio lengths (default)
+  - **Horizontal Stretch**: Creates wider, flatter waveforms
+  - **Vertical Stretch**: Creates taller, more compact waveforms
+
+**Fixed Size**
+- Manually set exact width and height in pixels
+- Useful when you need specific dimensions
+
+#### Frame Rate (Not used for image export, reserved for future features)
+- Currently not applicable for PNG export
+- May be used in future video export features
 
 ### Step 3: Generate Waveform
-- Click "Generate Waveform Animation" to preview the waveform
-- The preview will show the complete waveform
+- Click "Generate Waveform" to create and preview the waveform image
+- The preview shows the complete waveform with transparent background
+- Dimensions are calculated based on your settings
 
-### Step 4: Export Video
-- Click "Export as MP4" to render and download the animated video
-- The video will animate from the start, showing the waveform progressively
-- Output format is WebM (VP9 codec with alpha channel for transparency)
+### Step 4: Export Image
+- Click "Export as PNG" to download the waveform image
+- Output format is PNG with full alpha channel transparency
+- The image can be directly imported into video editors, image editors, or used for web graphics
 
-### Converting to MP4
+## Using the PNG in Video Editors
 
-The application exports WebM format with transparency. To convert to MP4 while preserving transparency:
+The exported PNG images work perfectly with:
+- **DaVinci Resolve**: Drag and drop, transparency is preserved
+- **Adobe Premiere Pro**: Import directly, use as overlay
+- **Final Cut Pro**: Supports PNG transparency natively
+- **After Effects**: Import and composite with any background
+- **GIMP/Photoshop**: Full transparency support for further editing
 
-**Using FFmpeg (command line):**
-```bash
-ffmpeg -i input.webm -c:v png -pix_fmt rgba output.mov
-```
+## Tips for Best Results
 
-Note: MP4 traditionally doesn't support alpha transparency. Use MOV or WebM for transparent backgrounds. For MP4, you can use:
-```bash
-ffmpeg -i input.webm -c:v libx264 -pix_fmt yuv420p output.mp4
-```
-(This will lose transparency but create a widely compatible MP4)
+### For Long Audio (3-5 minutes):
+- Use Time-based mode with multiplier 100-150
+- Choose "Balanced" or "Horizontal Stretch" aspect mode
+- Results in wider, detailed waveforms
 
-**Online Converters:**
-- [CloudConvert](https://cloudconvert.com/)
-- [FreeConvert](https://www.freeconvert.com/video-converter)
+### For Short Audio/SFX (< 10 seconds):
+- Use Time-based mode with multiplier 200-500
+- Choose "Vertical Stretch" for better visibility
+- Prevents overly compressed waveforms
+
+### For Specific Dimensions:
+- Switch to Fixed Size mode
+- Enter exact width and height needed for your project
+- Useful when you need to match specific aspect ratios
 
 ## Technical Details
 
@@ -89,15 +122,14 @@ ffmpeg -i input.webm -c:v libx264 -pix_fmt yuv420p output.mp4
 
 - **HTML5 Canvas**: For rendering the waveform
 - **Web Audio API**: For audio processing and analysis
-- **MediaRecorder API**: For video recording
+- **Canvas toBlob API**: For PNG export with transparency
 
 ### Browser Compatibility
 
 This application works best in modern browsers that support:
 - Web Audio API
-- MediaRecorder API
-- Canvas API
-- VP9 codec
+- HTML5 Canvas
+- Canvas toBlob API
 
 Recommended browsers:
 - Google Chrome (88+)
@@ -149,26 +181,23 @@ Modify `styles.css` to change the appearance:
 
 ## Troubleshooting
 
-### Video Export Issues
+### Image Export Issues
 
 **Problem**: Export button doesn't work
-- **Solution**: Ensure your browser supports the MediaRecorder API and VP9 codec
+- **Solution**: Make sure you generated the waveform first by clicking "Generate Waveform"
 
-**Problem**: Video has no transparency
-- **Solution**: Make sure you're using a browser that supports VP9 with alpha channel. Try Chrome or Edge.
+**Problem**: Image has no transparency
+- **Solution**: Ensure your browser supports Canvas toBlob with transparency. Try Chrome or Edge.
 
 ### Audio Issues
 
 **Problem**: Audio file won't load
 - **Solution**: Check that the file is a valid audio format and not corrupted
 
-**Problem**: No sound in exported video
-- **Solution**: Ensure your browser has permission to access audio. Check browser settings.
-
 ### Performance Issues
 
-**Problem**: Export is slow
-- **Solution**: Reduce canvas size or frame rate for faster processing
+**Problem**: Large audio files are slow to process
+- **Solution**: This is normal for very long audio files. The waveform generation processes the entire audio file to create an accurate visualization.
 
 ## License
 

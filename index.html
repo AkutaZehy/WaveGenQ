@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaveGenQ - Audio Waveform Animation Generator</title>
+    <title>WaveGenQ - Audio Waveform Image Generator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>WaveGenQ</h1>
-            <p class="subtitle">Generate animated waveform videos from audio files</p>
+            <p class="subtitle">Generate waveform images from audio files</p>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </header>
 
         <main>
@@ -42,13 +58,40 @@
                 </div>
 
                 <div class="control-group">
-                    <label for="canvasWidth">Canvas Width (px):</label>
-                    <input type="number" id="canvasWidth" value="1280" min="320" max="3840" step="1">
+                    <label>Sizing Mode:</label>
+                    <div class="sizing-toggle">
+                        <button type="button" class="sizing-btn active" data-mode="time">Time-based</button>
+                        <button type="button" class="sizing-btn" data-mode="fixed">Fixed Size</button>
+                    </div>
                 </div>
 
-                <div class="control-group">
-                    <label for="canvasHeight">Canvas Height (px):</label>
-                    <input type="number" id="canvasHeight" value="720" min="180" max="2160" step="1">
+                <div id="timeBasedControls" class="sizing-controls">
+                    <div class="control-group">
+                        <label for="timeMultiplier">Time Multiplier:</label>
+                        <input type="number" id="timeMultiplier" value="100" min="10" max="500" step="10">
+                        <small>Pixels per second (higher = wider)</small>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="aspectMode">Aspect Mode:</label>
+                        <select id="aspectMode">
+                            <option value="balanced">Balanced</option>
+                            <option value="horizontal">Horizontal Stretch</option>
+                            <option value="vertical">Vertical Stretch</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="fixedSizeControls" class="sizing-controls" style="display: none;">
+                    <div class="control-group">
+                        <label for="canvasWidth">Canvas Width (px):</label>
+                        <input type="number" id="canvasWidth" value="1280" min="320" max="3840" step="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="canvasHeight">Canvas Height (px):</label>
+                        <input type="number" id="canvasHeight" value="720" min="180" max="2160" step="1">
+                    </div>
                 </div>
 
                 <div class="control-group">
@@ -56,7 +99,7 @@
                     <input type="number" id="fps" value="30" min="15" max="60" step="1">
                 </div>
 
-                <button id="generateBtn" class="btn btn-primary">Generate Waveform Animation</button>
+                <button id="generateBtn" class="btn btn-primary">Generate Waveform</button>
             </section>
 
             <section class="preview-section" id="previewSection" style="display: none;">
@@ -73,7 +116,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button id="exportBtn" class="btn btn-success" style="display: none;">Export as MP4</button>
+                    <button id="exportBtn" class="btn btn-success" style="display: none;">Export as PNG</button>
                     <button id="resetBtn" class="btn btn-secondary">Upload New File</button>
                 </div>
             </section>

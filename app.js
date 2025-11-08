@@ -2,6 +2,7 @@
 let audioContext = null;
 let audioBuffer = null;
 let audioFileName = '';
+let sizingMode = 'time'; // 'time' or 'fixed'
 
 // DOM elements
 const uploadArea = document.getElementById('uploadArea');
@@ -13,6 +14,8 @@ const waveColorInput = document.getElementById('waveColor');
 const waveColorTextInput = document.getElementById('waveColorText');
 const canvasWidthInput = document.getElementById('canvasWidth');
 const canvasHeightInput = document.getElementById('canvasHeight');
+const timeMultiplierInput = document.getElementById('timeMultiplier');
+const aspectModeSelect = document.getElementById('aspectMode');
 const fpsInput = document.getElementById('fps');
 const generateBtn = document.getElementById('generateBtn');
 const exportBtn = document.getElementById('exportBtn');
@@ -21,11 +24,23 @@ const waveformCanvas = document.getElementById('waveformCanvas');
 const progressContainer = document.getElementById('progressContainer');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
+const themeToggle = document.getElementById('themeToggle');
+const sizingBtns = document.querySelectorAll('.sizing-btn');
+const timeBasedControls = document.getElementById('timeBasedControls');
+const fixedSizeControls = document.getElementById('fixedSizeControls');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
+    loadThemePreference();
 });
+
+function loadThemePreference() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+    }
+}
 
 function setupEventListeners() {
     // Upload area click
@@ -53,11 +68,35 @@ function setupEventListeners() {
         }
     });
 
+    // Sizing mode toggle
+    sizingBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            sizingBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            sizingMode = btn.dataset.mode;
+            
+            if (sizingMode === 'time') {
+                timeBasedControls.style.display = 'block';
+                fixedSizeControls.style.display = 'none';
+            } else {
+                timeBasedControls.style.display = 'none';
+                fixedSizeControls.style.display = 'block';
+            }
+        });
+    });
+
+    // Theme toggle
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
     // Generate button
     generateBtn.addEventListener('click', generateWaveform);
 
     // Export button
-    exportBtn.addEventListener('click', exportVideo);
+    exportBtn.addEventListener('click', exportImage);
 
     // Reset button
     resetBtn.addEventListener('click', resetApp);
@@ -159,9 +198,38 @@ async function generateWaveform() {
     previewSection.style.display = 'block';
     exportBtn.style.display = 'none';
 
-    const width = parseInt(canvasWidthInput.value);
-    const height = parseInt(canvasHeightInput.value);
     const color = waveColorInput.value;
+    let width, height;
+
+    // Calculate dimensions based on sizing mode
+    if (sizingMode === 'time') {
+        const duration = audioBuffer.duration;
+        const multiplier = parseInt(timeMultiplierInput.value);
+        const aspectMode = aspectModeSelect.value;
+
+        // Base width on duration
+        width = Math.round(duration * multiplier);
+        
+        // Calculate height based on aspect mode
+        if (aspectMode === 'balanced') {
+            // Use a balanced ratio for most audio lengths
+            height = Math.max(400, Math.min(800, width / 3));
+        } else if (aspectMode === 'horizontal') {
+            // More horizontal stretch - shorter height
+            height = Math.max(300, width / 5);
+        } else { // vertical
+            // More vertical - taller height
+            height = Math.max(500, width / 2);
+        }
+
+        // Ensure reasonable bounds
+        width = Math.max(320, Math.min(3840, width));
+        height = Math.max(180, Math.min(2160, height));
+    } else {
+        // Fixed size mode
+        width = parseInt(canvasWidthInput.value);
+        height = parseInt(canvasHeightInput.value);
+    }
 
     // Set canvas size
     waveformCanvas.width = width;
@@ -208,7 +276,7 @@ function drawWaveform(buffer, canvas, color) {
     }
 }
 
-async function exportVideo() {
+async function exportImage() {
     if (!audioBuffer) {
         alert('Please generate a waveform first.');
         return;
@@ -217,133 +285,41 @@ async function exportVideo() {
     exportBtn.disabled = true;
     progressContainer.style.display = 'block';
     progressFill.style.width = '0%';
-    progressText.textContent = 'Processing: 0%';
+    progressText.textContent = 'Exporting...';
 
     try {
-        const width = parseInt(canvasWidthInput.value);
-        const height = parseInt(canvasHeightInput.value);
-        const fps = parseInt(fpsInput.value);
-        const color = waveColorInput.value;
-        const duration = audioBuffer.duration;
-        const totalFrames = Math.ceil(duration * fps);
-
-        // Check if MediaRecorder supports VP9 with alpha
-        const mimeType = 'video/webm;codecs=vp9';
+        // Use the current canvas
+        progressFill.style.width = '50%';
         
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            alert('Your browser does not support VP9 codec. The video will be exported as WebM without guaranteed transparency.');
-        }
-
-        // Create a temporary canvas for animation
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext('2d', { alpha: true });
-
-        // Create video stream from canvas
-        const stream = tempCanvas.captureStream(fps);
-        
-        // Create audio source
-        const audioSource = audioContext.createBufferSource();
-        audioSource.buffer = audioBuffer;
-        
-        // Create MediaStreamDestination for audio
-        const audioDestination = audioContext.createMediaStreamDestination();
-        audioSource.connect(audioDestination);
-        
-        // Combine video and audio streams
-        const audioTrack = audioDestination.stream.getAudioTracks()[0];
-        stream.addTrack(audioTrack);
-
-        const chunks = [];
-        const mediaRecorder = new MediaRecorder(stream, {
-            mimeType: mimeType,
-            videoBitsPerSecond: 5000000
-        });
-
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) {
-                chunks.push(e.data);
+        // Export canvas as PNG with transparency
+        waveformCanvas.toBlob((blob) => {
+            if (!blob) {
+                alert('Error generating image. Please try again.');
+                exportBtn.disabled = false;
+                progressContainer.style.display = 'none';
+                return;
             }
-        };
 
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${audioFileName.replace(/\.[^/.]+$/, '')}_waveform.webm`;
+            a.download = `${audioFileName.replace(/\.[^/.]+$/, '')}_waveform.png`;
             a.click();
             
             URL.revokeObjectURL(url);
             
-            progressContainer.style.display = 'none';
-            exportBtn.disabled = false;
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Export complete!';
             
-            alert('Video exported successfully! Note: WebM format is exported. You can convert to MP4 using online tools or video converters while preserving transparency.');
-        };
-
-        mediaRecorder.start();
-        audioSource.start(0);
-
-        // Animation loop
-        let currentFrame = 0;
-        const data = audioBuffer.getChannelData(0);
-        const samplesPerFrame = Math.floor(data.length / totalFrames);
-
-        const animate = () => {
-            if (currentFrame >= totalFrames) {
-                mediaRecorder.stop();
-                audioSource.stop();
-                return;
-            }
-
-            // Clear with transparent background
-            tempCtx.clearRect(0, 0, width, height);
-
-            // Calculate progress
-            const progress = currentFrame / totalFrames;
-            const currentSample = Math.floor(progress * data.length);
-            
-            // Draw waveform up to current position
-            tempCtx.fillStyle = color;
-            const step = Math.ceil(data.length / width);
-            const amp = height / 2;
-
-            for (let i = 0; i < width * progress; i++) {
-                let min = 1.0;
-                let max = -1.0;
-
-                for (let j = 0; j < step; j++) {
-                    const index = (i * step) + j;
-                    if (index < data.length) {
-                        const datum = data[index];
-                        if (datum < min) min = datum;
-                        if (datum > max) max = datum;
-                    }
-                }
-
-                const yMin = (1 + min) * amp;
-                const yMax = (1 + max) * amp;
-
-                tempCtx.fillRect(i, yMin, 1, yMax - yMin);
-            }
-
-            // Update progress
-            const progressPercent = Math.floor(progress * 100);
-            progressFill.style.width = progressPercent + '%';
-            progressText.textContent = `Processing: ${progressPercent}%`;
-
-            currentFrame++;
-            setTimeout(animate, 1000 / fps);
-        };
-
-        animate();
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                exportBtn.disabled = false;
+            }, 1000);
+        }, 'image/png');
 
     } catch (error) {
-        console.error('Error exporting video:', error);
-        alert('Error exporting video. Please try again.');
+        console.error('Error exporting image:', error);
+        alert('Error exporting image. Please try again.');
         exportBtn.disabled = false;
         progressContainer.style.display = 'none';
     }
@@ -353,6 +329,7 @@ function resetApp() {
     // Reset all variables
     audioBuffer = null;
     audioFileName = '';
+    sizingMode = 'time';
 
     // Reset file input
     audioFileInput.value = '';
@@ -367,7 +344,20 @@ function resetApp() {
     waveColorTextInput.value = '#00ff88';
     canvasWidthInput.value = '1280';
     canvasHeightInput.value = '720';
+    timeMultiplierInput.value = '100';
+    aspectModeSelect.value = 'balanced';
     fpsInput.value = '30';
+
+    // Reset sizing mode
+    sizingBtns.forEach(btn => {
+        if (btn.dataset.mode === 'time') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    timeBasedControls.style.display = 'block';
+    fixedSizeControls.style.display = 'none';
 
     // Clear canvas
     const ctx = waveformCanvas.getContext('2d');
