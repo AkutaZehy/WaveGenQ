@@ -172,6 +172,7 @@ function handleFile(file) {
         try {
             // Initialize audio context
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await audioContext.resume();
             audioBuffer = await audioContext.decodeAudioData(e.target.result);
             audioDuration = audioBuffer.duration;
             
@@ -324,10 +325,17 @@ async function exportImage() {
     progressFill.style.width = '0%';
     progressText.textContent = 'Exporting...';
 
+    // Simulate progress (actual export is nearly instantaneous)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress >= 90) {
+            clearInterval(progressInterval);
+        }
+        progressFill.style.width = progress + '%';
+    }, 50);
+
     try {
-        // Use the current canvas
-        progressFill.style.width = '50%';
-        
         // Export canvas as PNG with transparency
         waveformCanvas.toBlob((blob) => {
             if (!blob) {
@@ -344,7 +352,8 @@ async function exportImage() {
             a.click();
             
             URL.revokeObjectURL(url);
-            
+
+            clearInterval(progressInterval);
             progressFill.style.width = '100%';
             progressText.textContent = 'Export complete!';
             
@@ -355,6 +364,7 @@ async function exportImage() {
         }, 'image/png');
 
     } catch (error) {
+        clearInterval(progressInterval);
         console.error('Error exporting image:', error);
         alert('Error exporting image. Please try again.');
         exportBtn.disabled = false;
