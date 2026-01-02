@@ -20,6 +20,10 @@ const canvasWidthInput = document.getElementById('canvasWidth');
 const canvasHeightInput = document.getElementById('canvasHeight');
 const timeMultiplierInput = document.getElementById('timeMultiplier');
 const verticalHeightInput = document.getElementById('verticalHeight');
+const timeMultiplierError = document.getElementById('timeMultiplierError');
+const verticalHeightError = document.getElementById('verticalHeightError');
+const canvasWidthError = document.getElementById('canvasWidthError');
+const canvasHeightError = document.getElementById('canvasHeightError');
 const generateBtn = document.getElementById('generateBtn');
 const exportBtn = document.getElementById('exportBtn');
 const resetBtn = document.getElementById('resetBtn');
@@ -103,7 +107,7 @@ function setupEventListeners() {
             sizingBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             sizingMode = btn.dataset.mode;
-            
+
             if (sizingMode === 'time') {
                 timeBasedControls.style.display = 'block';
                 fixedSizeControls.style.display = 'none';
@@ -129,6 +133,70 @@ function setupEventListeners() {
 
     // Reset button
     resetBtn.addEventListener('click', resetApp);
+
+    // Real-time validation for numeric inputs
+    timeMultiplierInput.addEventListener('input', () => validateTimeMultiplier());
+    timeMultiplierInput.addEventListener('blur', () => validateTimeMultiplier());
+
+    verticalHeightInput.addEventListener('input', () => validateVerticalHeight());
+    verticalHeightInput.addEventListener('blur', () => validateVerticalHeight());
+
+    canvasWidthInput.addEventListener('input', () => validateCanvasWidth());
+    canvasWidthInput.addEventListener('blur', () => validateCanvasWidth());
+
+    canvasHeightInput.addEventListener('input', () => validateCanvasHeight());
+    canvasHeightInput.addEventListener('blur', () => validateCanvasHeight());
+}
+
+// Validation helper functions
+function setError(input, errorElement, isError) {
+    if (isError) {
+        input.classList.add('error');
+        errorElement.classList.add('visible');
+    } else {
+        input.classList.remove('error');
+        errorElement.classList.remove('visible');
+    }
+}
+
+function validateTimeMultiplier() {
+    const value = parseInt(timeMultiplierInput.value);
+    const isValid = !isNaN(value) && value >= 10 && value <= 500;
+    setError(timeMultiplierInput, timeMultiplierError, !isValid);
+    return isValid;
+}
+
+function validateVerticalHeight() {
+    const value = parseInt(verticalHeightInput.value);
+    const isValid = !isNaN(value) && value >= 100 && value <= 2160;
+    setError(verticalHeightInput, verticalHeightError, !isValid);
+    return isValid;
+}
+
+function validateCanvasWidth() {
+    const value = parseInt(canvasWidthInput.value);
+    const isValid = !isNaN(value) && value >= 320 && value <= 3840;
+    setError(canvasWidthInput, canvasWidthError, !isValid);
+    return isValid;
+}
+
+function validateCanvasHeight() {
+    const value = parseInt(canvasHeightInput.value);
+    const isValid = !isNaN(value) && value >= 180 && value <= 2160;
+    setError(canvasHeightInput, canvasHeightError, !isValid);
+    return isValid;
+}
+
+function validateAllInputs() {
+    let isValid = true;
+
+    if (sizingMode === 'time') {
+        isValid = validateTimeMultiplier() && validateVerticalHeight();
+    } else {
+        isValid = validateCanvasWidth() && validateCanvasHeight();
+    }
+
+    return isValid;
 }
 
 function handleDragOver(e) {
@@ -172,6 +240,7 @@ function handleFile(file) {
         try {
             // Initialize audio context
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await audioContext.resume();
             audioBuffer = await audioContext.decodeAudioData(e.target.result);
             audioDuration = audioBuffer.duration;
             
@@ -234,6 +303,25 @@ async function generateWaveform() {
         return;
     }
 
+    // Validate all inputs before proceeding
+    if (!validateAllInputs()) {
+        // Focus on the first invalid input
+        if (sizingMode === 'time') {
+            if (!validateTimeMultiplier()) {
+                timeMultiplierInput.focus();
+            } else if (!validateVerticalHeight()) {
+                verticalHeightInput.focus();
+            }
+        } else {
+            if (!validateCanvasWidth()) {
+                canvasWidthInput.focus();
+            } else if (!validateCanvasHeight()) {
+                canvasHeightInput.focus();
+            }
+        }
+        return;
+    }
+
     generateBtn.disabled = true;
     previewSection.style.display = 'block';
     exportBtn.style.display = 'none';
@@ -246,16 +334,10 @@ async function generateWaveform() {
     if (sizingMode === 'time') {
         const duration = audioBuffer.duration;
         const multiplier = parseInt(timeMultiplierInput.value);
-        
-        // Strictly: width = duration × px/sec
-        width = Math.round(duration * multiplier);
-        
-        // Height is user-defined
-        height = parseInt(verticalHeightInput.value);
 
-        // Ensure reasonable bounds
-        width = Math.max(320, Math.min(3840, width));
-        height = Math.max(100, Math.min(2160, height));
+        // Width = duration × px/sec
+        width = Math.round(duration * multiplier);
+        height = parseInt(verticalHeightInput.value);
     } else {
         // Fixed size mode
         width = parseInt(canvasWidthInput.value);
@@ -324,10 +406,17 @@ async function exportImage() {
     progressFill.style.width = '0%';
     progressText.textContent = 'Exporting...';
 
+    // Simulate progress (actual export is nearly instantaneous)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress >= 90) {
+            clearInterval(progressInterval);
+        }
+        progressFill.style.width = progress + '%';
+    }, 50);
+
     try {
-        // Use the current canvas
-        progressFill.style.width = '50%';
-        
         // Export canvas as PNG with transparency
         waveformCanvas.toBlob((blob) => {
             if (!blob) {
@@ -344,7 +433,8 @@ async function exportImage() {
             a.click();
             
             URL.revokeObjectURL(url);
-            
+
+            clearInterval(progressInterval);
             progressFill.style.width = '100%';
             progressText.textContent = 'Export complete!';
             
@@ -355,6 +445,7 @@ async function exportImage() {
         }, 'image/png');
 
     } catch (error) {
+        clearInterval(progressInterval);
         console.error('Error exporting image:', error);
         alert('Error exporting image. Please try again.');
         exportBtn.disabled = false;
@@ -389,6 +480,16 @@ function resetApp() {
     canvasHeightInput.value = '720';
     timeMultiplierInput.value = '100';
     verticalHeightInput.value = '400';
+
+    // Clear all error states
+    timeMultiplierInput.classList.remove('error');
+    verticalHeightInput.classList.remove('error');
+    canvasWidthInput.classList.remove('error');
+    canvasHeightInput.classList.remove('error');
+    timeMultiplierError.classList.remove('visible');
+    verticalHeightError.classList.remove('visible');
+    canvasWidthError.classList.remove('visible');
+    canvasHeightError.classList.remove('visible');
 
     // Reset sizing mode
     sizingBtns.forEach(btn => {

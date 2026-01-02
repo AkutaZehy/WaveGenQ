@@ -78,34 +78,44 @@
                 </div>
 
                 <div id="timeBasedControls" class="sizing-controls">
-                    <div class="control-group">
-                        <label for="timeMultiplier">Pixels per Second:</label>
-                        <input type="number" id="timeMultiplier" value="100" min="10" max="500" step="10">
-                        <small>Controls horizontal width. Width = duration × px/sec</small>
+                    <div class="input-error-row">
+                        <div class="control-group">
+                            <label for="timeMultiplier">Pixels per Second:</label>
+                            <input type="number" id="timeMultiplier" value="100" min="10" max="500" step="10">
+                            <small>Controls horizontal width. Width = duration × px/sec (Range: 10 - 500)</small>
+                            <div class="error-message" id="timeMultiplierError">Value must be between 10 and 500</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="verticalHeight">Vertical Height (px):</label>
+                            <input type="number" id="verticalHeight" value="400" min="100" max="2160" step="10">
+                            <small>Controls the height of the waveform (Range: 100 - 2160)</small>
+                            <div class="error-message" id="verticalHeightError">Value must be between 100 and 2160</div>
+                        </div>
                     </div>
 
-                    <div class="control-group">
-                        <label for="verticalHeight">Vertical Height (px):</label>
-                        <input type="number" id="verticalHeight" value="400" min="100" max="2160" step="10">
-                        <small>Controls the height of the waveform</small>
-                    </div>
-                    
                     <div class="algorithm-note">
                         <strong>Algorithm:</strong> Width is strictly duration × px/sec. Height is user-defined for consistent vertical scaling.
                     </div>
                 </div>
 
                 <div id="fixedSizeControls" class="sizing-controls" style="display: none;">
-                    <div class="control-group">
-                        <label for="canvasWidth">Width (px):</label>
-                        <input type="number" id="canvasWidth" value="1280" min="320" max="3840" step="1">
+                    <div class="input-error-row">
+                        <div class="control-group">
+                            <label for="canvasWidth">Width (px):</label>
+                            <input type="number" id="canvasWidth" value="1280" min="320" max="3840" step="1">
+                            <small>Range: 320 - 3840</small>
+                            <div class="error-message" id="canvasWidthError">Value must be between 320 and 3840</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="canvasHeight">Height (px):</label>
+                            <input type="number" id="canvasHeight" value="720" min="180" max="2160" step="1">
+                            <small>Range: 180 - 2160</small>
+                            <div class="error-message" id="canvasHeightError">Value must be between 180 and 2160</div>
+                        </div>
                     </div>
 
-                    <div class="control-group">
-                        <label for="canvasHeight">Height (px):</label>
-                        <input type="number" id="canvasHeight" value="720" min="180" max="2160" step="1">
-                    </div>
-                    
                     <div class="algorithm-note">
                         <strong>Algorithm:</strong> Waveform is scaled to fit exactly within specified width and height.
                     </div>
